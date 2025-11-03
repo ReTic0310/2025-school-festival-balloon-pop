@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-HEART BALLOON POP - Main entry point.
+BALLOON SHOOTER - Main entry point.
 
-A game where players shoot balloons by making heart gestures with their hands.
+A game where players shoot balloons by making gun gestures with their hands.
 """
 
 import sys
@@ -21,7 +21,7 @@ from game import Game
 def main():
     """Main game loop."""
     print("=" * 50)
-    print("HEART BALLOON POP")
+    print("BALLOON SHOOTER")
     print("=" * 50)
 
     # Initialize camera

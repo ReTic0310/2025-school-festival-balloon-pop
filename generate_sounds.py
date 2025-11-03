@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate 8-bit style sound effects for the game.
+Generate 8-bit style sound effects for BALLOON SHOOTER.
 """
 
 import numpy as np

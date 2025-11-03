@@ -1,5 +1,5 @@
 """
-HEART BALLOON POP - Main game implementation.
+BALLOON SHOOTER - Main game implementation.
 """
 
 import pygame
@@ -239,7 +239,7 @@ class Game:
 
         # Create display surface
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
-        pygame.display.set_caption("HEART BALLOON POP")
+        pygame.display.set_caption("BALLOON SHOOTER")
 
         # Create virtual surface for pixel-perfect rendering
         self.virtual_surface = pygame.Surface((VIRTUAL_WIDTH, VIRTUAL_HEIGHT))
