@@ -341,31 +341,31 @@ class Game:
 
     def calculate_time_tickets(self) -> int:
         """
-        Calculate time tickets based on balloons popped (in seconds).
+        Calculate time tickets based on score (in seconds).
 
         Logic:
-        - Maximum: +90 seconds (1:30) for excellent performance (30+ balloons)
-        - Middle point: 0 seconds for average performance (15 balloons)
-        - Below middle: Negative time penalty for poor performance
+        - Maximum: +90 seconds (1:30) for excellent performance (350+ score)
+        - Zero point: 0 seconds for average performance (200 score)
+        - Below 200: Negative time penalty for poor performance
 
         Returns:
             Time tickets in seconds (can be negative)
         """
-        # Linear scale based on balloons popped
-        # Middle point (0 seconds): 15 balloons
-        # Maximum (+90 seconds): 30 balloons or more
-        # Below middle: -6 seconds per balloon below 15
+        # Score-based calculation (balanced difficulty)
+        # Zero point: 200 score = 0 seconds
+        # Maximum: 350+ score = +90 seconds
+        # Below 200: Penalty
 
-        if self.balloons_popped >= 30:
+        if self.score >= 350:
             # Maximum reward: 90 seconds (1:30)
             return 90
-        elif self.balloons_popped >= 15:
+        elif self.score >= 200:
             # Linear interpolation between 0 and 90 seconds
-            # For each balloon above 15, add 6 seconds (90/15 = 6)
-            return (self.balloons_popped - 15) * 6
+            # For each point above 200, add 0.6 seconds (90/150 = 0.6)
+            return int((self.score - 200) * 0.6)
         else:
-            # Penalty: -6 seconds per balloon below 15
-            return (self.balloons_popped - 15) * 6
+            # Penalty: -0.4 seconds per point below 200
+            return int((self.score - 200) * 0.4)
 
     def update(self, dt: float):
         """Update game state."""
@@ -582,6 +582,34 @@ class Game:
                 1
             )
 
+    def _draw_text_with_background(self, font, text: str, color: Tuple[int, int, int],
+                                   center_pos: Tuple[int, int], padding: int = 8,
+                                   bg_alpha: int = 180):
+        """Draw text with semi-transparent background box and thick outline."""
+        # Render text to get dimensions
+        text_surface = font.render(text, True, color)
+        text_rect = text_surface.get_rect(center=center_pos)
+
+        # Create semi-transparent background box
+        box_rect = text_rect.inflate(padding * 2, padding * 2)
+        bg_surface = pygame.Surface((box_rect.width, box_rect.height))
+        bg_surface.set_alpha(bg_alpha)
+        bg_surface.fill((0, 0, 0))  # Black background
+        self.virtual_surface.blit(bg_surface, box_rect)
+
+        # Draw thick white outline (3 pixels thick)
+        for offset in range(1, 4):
+            for dx in [-offset, 0, offset]:
+                for dy in [-offset, 0, offset]:
+                    if dx == 0 and dy == 0:
+                        continue
+                    outline_surface = font.render(text, True, COLOR_BLACK)
+                    outline_rect = outline_surface.get_rect(center=(center_pos[0] + dx, center_pos[1] + dy))
+                    self.virtual_surface.blit(outline_surface, outline_rect)
+
+        # Draw main text
+        self.virtual_surface.blit(text_surface, text_rect)
+
     def _draw_text_with_shadow(self, font, text: str, color: Tuple[int, int, int],
                                center_pos: Tuple[int, int], shadow_offset: int = 3):
         """Draw text with shadow effect for better readability."""
@@ -597,16 +625,18 @@ class Game:
         self.virtual_surface.blit(text_surface, text_rect)
 
     def _draw_text_with_border(self, font, text: str, color: Tuple[int, int, int],
-                               center_pos: Tuple[int, int], border_color: Tuple[int, int, int] = COLOR_WHITE):
-        """Draw text with outline border for pixel art style."""
-        # Draw border (8 directions)
-        for dx in [-1, 0, 1]:
-            for dy in [-1, 0, 1]:
-                if dx == 0 and dy == 0:
-                    continue
-                border_surface = font.render(text, True, border_color)
-                border_rect = border_surface.get_rect(center=(center_pos[0] + dx, center_pos[1] + dy))
-                self.virtual_surface.blit(border_surface, border_rect)
+                               center_pos: Tuple[int, int], border_color: Tuple[int, int, int] = COLOR_BLACK,
+                               border_thickness: int = 3):
+        """Draw text with thick outline border for maximum visibility."""
+        # Draw thick border (multiple layers for better visibility)
+        for offset in range(1, border_thickness + 1):
+            for dx in [-offset, 0, offset]:
+                for dy in [-offset, 0, offset]:
+                    if dx == 0 and dy == 0:
+                        continue
+                    border_surface = font.render(text, True, border_color)
+                    border_rect = border_surface.get_rect(center=(center_pos[0] + dx, center_pos[1] + dy))
+                    self.virtual_surface.blit(border_surface, border_rect)
 
         # Draw main text
         text_surface = font.render(text, True, color)
@@ -646,35 +676,38 @@ class Game:
 
     def _draw_ready_screen(self):
         """Draw READY state screen."""
-        # Title with border effect (pixel art style)
+        # Title with thick border for maximum visibility
         self._draw_text_with_border(
             self.font_big,
             "BALLOON SHOOTER",
-            COLOR_TEXT_MAIN,
-            (VIRTUAL_WIDTH // 2, VIRTUAL_HEIGHT // 2 - 30)
+            COLOR_YELLOW,
+            (VIRTUAL_WIDTH // 2, VIRTUAL_HEIGHT // 2 - 30),
+            border_color=COLOR_BLACK,
+            border_thickness=5
         )
 
-        # Instructions with shadow
-        self._draw_text_with_shadow(
+        # Instructions with thick border
+        self._draw_text_with_border(
             self.font_small,
             "Point gun to aim & shoot!",
-            COLOR_TEXT_SECONDARY,
-            (VIRTUAL_WIDTH // 2, VIRTUAL_HEIGHT // 2 + 10)
+            COLOR_WHITE,
+            (VIRTUAL_WIDTH // 2, VIRTUAL_HEIGHT // 2 + 10),
+            border_color=COLOR_BLACK,
+            border_thickness=4
         )
 
-        # Start text with shadow (pulsing effect)
+        # Start text with thick border (pulsing effect)
         pulse_time = time.time() * 2
         pulse_alpha = 0.5 + 0.5 * np.sin(pulse_time)
-        pulse_color = (
-            int(COLOR_TEXT_HIGHLIGHT[0] * pulse_alpha + COLOR_YELLOW[0] * (1 - pulse_alpha)),
-            int(COLOR_TEXT_HIGHLIGHT[1] * pulse_alpha + COLOR_YELLOW[1] * (1 - pulse_alpha)),
-            int(COLOR_TEXT_HIGHLIGHT[2] * pulse_alpha + COLOR_YELLOW[2] * (1 - pulse_alpha))
-        )
-        self._draw_text_with_shadow(
+        pulse_color = (255, int(215 * pulse_alpha + 255 * (1 - pulse_alpha)), 0)  # Yellow to white pulse
+
+        self._draw_text_with_border(
             self.font_small,
             "Press SPACE to start",
             pulse_color,
-            (VIRTUAL_WIDTH // 2, VIRTUAL_HEIGHT // 2 + 30)
+            (VIRTUAL_WIDTH // 2, VIRTUAL_HEIGHT // 2 + 40),
+            border_color=COLOR_BLACK,
+            border_thickness=4
         )
 
     def _draw_game_screen(self):
@@ -691,35 +724,44 @@ class Game:
         if self.is_aiming and self.aiming_position:
             self._draw_aiming_reticle()
 
-        # Draw UI - simple text with shadows (no boxes)
+        # Draw UI with thick borders for maximum readability
         current_time = time.time()
         elapsed_time = current_time - self.game_start_time
         remaining_time = max(0, GAME_DURATION - elapsed_time)
 
-        # Score (top left) with thick shadow for readability
+        # Score (top left) with thick black outline
         score_text = f"SCORE: {self.score}"
-        # Double shadow for better contrast
-        shadow = self.font.render(score_text, True, COLOR_BLACK)
-        self.virtual_surface.blit(shadow, (12, 12))
-        self.virtual_surface.blit(shadow, (13, 13))
-        text = self.font.render(score_text, True, COLOR_TEXT_MAIN)
-        self.virtual_surface.blit(text, (10, 10))
+        self._draw_text_with_border(
+            self.font,
+            score_text,
+            COLOR_YELLOW,
+            (80, 18),
+            border_color=COLOR_BLACK,
+            border_thickness=4
+        )
 
-        # Balloons popped (below score) with thick shadow
+        # Balloons popped (middle)
         popped_text = f"POPPED: {self.balloons_popped}"
-        shadow = self.font.render(popped_text, True, COLOR_BLACK)
-        self.virtual_surface.blit(shadow, (12, 32))
-        self.virtual_surface.blit(shadow, (13, 33))
-        text = self.font.render(popped_text, True, COLOR_TEXT_SECONDARY)
-        self.virtual_surface.blit(text, (10, 30))
+        self._draw_text_with_border(
+            self.font,
+            popped_text,
+            COLOR_WHITE,
+            (80, 40),
+            border_color=COLOR_BLACK,
+            border_thickness=4
+        )
 
-        # Time (below popped) with thick shadow
+        # Time (bottom) with special color when low
+        time_color = COLOR_RED if remaining_time <= 5 else COLOR_CYAN
         time_text = f"TIME: {int(remaining_time)}s"
-        shadow = self.font.render(time_text, True, COLOR_BLACK)
-        self.virtual_surface.blit(shadow, (12, 52))
-        self.virtual_surface.blit(shadow, (13, 53))
-        text = self.font.render(time_text, True, COLOR_TEXT_HIGHLIGHT)
-        self.virtual_surface.blit(text, (10, 50))
+        self._draw_text_with_border(
+            self.font,
+            time_text,
+            time_color,
+            (80, 62),
+            border_color=COLOR_BLACK,
+            border_thickness=4
+        )
 
     def _draw_result_screen(self):
         """Draw RESULT state screen."""
@@ -731,29 +773,34 @@ class Game:
         for star_x, star_y in star_positions:
             self._draw_star(star_x, star_y, 6, COLOR_YELLOW)
 
-        # Big title "YOU WIN!" with border (pixel art style)
+        # Big title "YOU WIN!" with thick border for maximum visibility
         self._draw_text_with_border(
             self.font_big,
             "YOU WIN!",
             COLOR_YELLOW,
             (VIRTUAL_WIDTH // 2, 60),
-            border_color=COLOR_TEXT_MAIN
+            border_color=COLOR_BLACK,
+            border_thickness=5
         )
 
-        # Score with shadow - simple and clean
-        self._draw_text_with_shadow(
+        # Score with thick border - vibrant and readable
+        self._draw_text_with_border(
             self.font,
             f"SCORE: {self.score}",
-            COLOR_TEXT_MAIN,
-            (VIRTUAL_WIDTH // 2, 100)
+            COLOR_CYAN,
+            (VIRTUAL_WIDTH // 2, 100),
+            border_color=COLOR_BLACK,
+            border_thickness=4
         )
 
-        # Balloons popped with shadow
-        self._draw_text_with_shadow(
+        # Balloons popped with thick border
+        self._draw_text_with_border(
             self.font,
             f"POPPED: {self.balloons_popped}",
-            COLOR_TEXT_SECONDARY,
-            (VIRTUAL_WIDTH // 2, 120)
+            COLOR_WHITE,
+            (VIRTUAL_WIDTH // 2, 125),
+            border_color=COLOR_BLACK,
+            border_thickness=4
         )
 
         # Time tickets (in seconds, can be negative)
@@ -761,7 +808,7 @@ class Game:
 
         # Format time display - always show minutes and seconds
         if tickets_seconds < 0:
-            # Negative time - show in RED
+            # Negative time - show in RED with thick border
             abs_seconds = abs(tickets_seconds)
             minutes = abs_seconds // 60
             seconds = abs_seconds % 60
@@ -775,11 +822,12 @@ class Game:
                 self.font_big,
                 ticket_text_str,
                 COLOR_RED,
-                (VIRTUAL_WIDTH // 2, 155),
-                border_color=COLOR_BLACK
+                (VIRTUAL_WIDTH // 2, 165),
+                border_color=COLOR_BLACK,
+                border_thickness=5
             )
         else:
-            # Positive time - show in bright pink with border!
+            # Positive time - show in bright yellow with thick border!
             minutes = tickets_seconds // 60
             seconds = tickets_seconds % 60
 
@@ -791,17 +839,20 @@ class Game:
             self._draw_text_with_border(
                 self.font_big,
                 ticket_text_str,
-                COLOR_TEXT_HIGHLIGHT,
-                (VIRTUAL_WIDTH // 2, 155),
-                border_color=COLOR_BLACK
+                COLOR_YELLOW,
+                (VIRTUAL_WIDTH // 2, 165),
+                border_color=COLOR_BLACK,
+                border_thickness=5
             )
 
-        # Restart instruction with shadow
-        self._draw_text_with_shadow(
+        # Restart instruction with thick border
+        self._draw_text_with_border(
             self.font_small,
-            "R:Restart  S:Save  Q:Quit",
-            COLOR_TEXT_SECONDARY,
-            (VIRTUAL_WIDTH // 2, 185)
+            "R:Restart  Q:Quit",
+            COLOR_WHITE,
+            (VIRTUAL_WIDTH // 2, 205),
+            border_color=COLOR_BLACK,
+            border_thickness=4
         )
 
     def _draw_star(self, x: int, y: int, size: int, color: Tuple[int, int, int]):
