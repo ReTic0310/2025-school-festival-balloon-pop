@@ -234,6 +234,9 @@ class Game:
     def __init__(self):
         pygame.init()
 
+        # Initialize sound mixer
+        pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+
         # Create display surface
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
         pygame.display.set_caption("HEART BALLOON POP")
@@ -244,6 +247,9 @@ class Game:
         # Load background image
         self.background_image = None
         self._load_background()
+
+        # Load sound effects
+        self._load_sounds()
 
         # Clock
         self.clock = pygame.time.Clock()
@@ -315,6 +321,10 @@ class Game:
         if current_time - self.last_shoot_time < SHOOT_COOLDOWN:
             return
 
+        # Play shoot sound
+        if self.sound_shoot:
+            self.sound_shoot.play()
+
         # Convert normalized coordinates (0-1000) to virtual coordinates
         virtual_x = (x / 1000.0) * VIRTUAL_WIDTH
         virtual_y = (y / 1000.0) * VIRTUAL_HEIGHT
@@ -325,6 +335,7 @@ class Game:
 
         # Instant hit detection at shoot position
         hit_radius = 15  # Hit detection radius
+        balloon_hit = False
         for balloon in self.balloons:
             if balloon.alive and balloon.collides_with(virtual_x, virtual_y, hit_radius):
                 balloon.alive = False
@@ -333,8 +344,13 @@ class Game:
                 # Only count positive scores toward balloon count
                 if balloon.score_value > 0:
                     self.balloons_popped += 1
+                balloon_hit = True
                 # Only hit one balloon per shot
                 break
+
+        # Play pop sound if balloon was hit
+        if balloon_hit and self.sound_pop:
+            self.sound_pop.play()
 
         self.last_shoot_time = current_time
 
@@ -380,6 +396,16 @@ class Game:
             # Check if game time is up
             if elapsed_time >= GAME_DURATION:
                 self.state = "RESULT"
+                # Play win or lose sound based on score
+                time_tickets = self.calculate_time_tickets()
+                if time_tickets >= 0:
+                    # Win (positive time tickets)
+                    if self.sound_win:
+                        self.sound_win.play()
+                else:
+                    # Lose (negative time tickets)
+                    if self.sound_lose:
+                        self.sound_lose.play()
                 return
 
             # Spawn balloons
@@ -428,6 +454,41 @@ class Game:
         except Exception as e:
             print(f"Error loading background image: {e}")
             self.background_image = None
+
+    def _load_sounds(self):
+        """Load sound effects from assets/sounds folder."""
+        try:
+            sounds_dir = Path(__file__).parent.parent / "assets" / "sounds"
+
+            # Load sound effects
+            self.sound_shoot = None
+            self.sound_pop = None
+            self.sound_win = None
+            self.sound_lose = None
+
+            if (sounds_dir / "shoot.wav").exists():
+                self.sound_shoot = pygame.mixer.Sound(str(sounds_dir / "shoot.wav"))
+                self.sound_shoot.set_volume(0.3)
+
+            if (sounds_dir / "pop.wav").exists():
+                self.sound_pop = pygame.mixer.Sound(str(sounds_dir / "pop.wav"))
+                self.sound_pop.set_volume(0.4)
+
+            if (sounds_dir / "win.wav").exists():
+                self.sound_win = pygame.mixer.Sound(str(sounds_dir / "win.wav"))
+                self.sound_win.set_volume(0.5)
+
+            if (sounds_dir / "lose.wav").exists():
+                self.sound_lose = pygame.mixer.Sound(str(sounds_dir / "lose.wav"))
+                self.sound_lose.set_volume(0.5)
+
+            print(f"Sound effects loaded successfully")
+        except Exception as e:
+            print(f"Error loading sound effects: {e}")
+            self.sound_shoot = None
+            self.sound_pop = None
+            self.sound_win = None
+            self.sound_lose = None
 
     def draw(self):
         """Draw game on virtual surface."""
