@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(./venv/bin/pip install:*)",
+      "Bash(./venv/bin/python3:*)",
+      "Bash(python3.9:*)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(python3.11:*)",
+      "Bash(python3.10:*)",
+      "Bash(apt list:*)",
+      "Bash(docker --version:*)",
+      "Bash(bash)",
+      "Bash(export PYENV_ROOT=\"$HOME/.pyenv\")",
+      "Bash(export PATH=\"$PYENV_ROOT/bin:$PATH\")",
+      "Bash(pyenv --version:*)",
+      "Bash(pyenv install:*)",
+      "Bash($HOME/.pyenv/bin/pyenv install --list)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(/home/ai/.pyenv/bin/pyenv:*)",
+      "Bash(dpkg:*)",
+      "Bash(awk:*)",
+      "Bash(v4l2-ctl:*)",
+      "Bash(export PATH=\"$HOME/.pyenv/bin:$PATH\")",
+      "Bash(~/.pyenv/bin/pyenv install --list)",
+      "Bash(~/.pyenv/bin/pyenv install:*)",
+      "Bash(sudo apt-get update:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(~/.pyenv/versions/3.11.14/bin/python3 -m venv venv)",
+      "Bash(chmod:*)",
+      "Bash(tree:*)",
+      "Bash(export DISPLAY=:0)",
+      "Bash(pkill:*)",
+      "Bash(./main.py:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "registered_cameras": [
+    {
+      "model": "C505 HD Webcam",
+      "serial": "962EAD20",
+      "bus_info": "usb-xhci-hcd.1-1",
+      "driver": "uvcvideo",
+      "preferred_format": "MJPG",
+      "preferred_resolution": [
+        1280,
+        720
+      ],
+      "preferred_fps": 30,
+      "last_seen_device": "/dev/video0",
+      "registration_date": "2025-11-02"
+    }
+  ]
+}
